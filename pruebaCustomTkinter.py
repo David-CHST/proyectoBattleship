@@ -434,7 +434,7 @@ class interfazMatriz(CTk.CTkFrame):
             if ventanaBatalla.frameSelecciónNave.getTipoNave() != False:
                 if self.modoMatriz == "colocar":
                     self.modoMatriz = "direccionar"
-                    self.labelMensaje.configure(text="Indique el sentido de la cola de la nave.")
+                    ventanaBatalla.labelMensaje.configure(text="Indique el sentido de la cola de la nave")
                     self.celdaReciente = [i,j]
                     self.celdaActual = [i,j]
                     self.colorReciente = "#77A6BB"
@@ -469,16 +469,16 @@ class interfazMatriz(CTk.CTkFrame):
                     elif [i, j] == [y,x-1]:
                         return self.varDirElegida.set("4")
                     else:
-                        print("Cancelando...")
+                        ventanaBatalla.labelMensaje.configure(text="Posicionamiento Cancelado!")
                         return self.varDirElegida.set("0")
                 elif self.modoMatriz == "atacar":
                     pass
             else:
-                print("Seleccione un tipo de nave!")
+                ventanaBatalla.labelMensaje.configure(text="Seleccione un tipo de Nave!")
         else:
-            print("Matriz equivocada!")
+            ventanaBatalla.labelMensaje.configure(text="Matriz equivocada!")
 
-    def totalActualizarMatriz(self, esDerecha):
+    def actualizarMatrizParaJugadorActual(self, esDerecha):
         for nave in partidaActual.listaNaves[ventanaBatalla.numJugador]:
             for i in range(nave.tipoNave):
                 # Hace un nuevo objeto de imagen CTkImage y abre la imagen con PIL.Image.open()...(solo "Image" aquí por como se importó)
@@ -491,6 +491,18 @@ class interfazMatriz(CTk.CTkFrame):
                 self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(image=buttonImage) # Se coloca la imagen en el botón
                 self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(True, width=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
                 self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(True, height=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
+
+    # Imita la función anterior pero oculta las imágenes del oponente
+    def ocultarMatrizOponente(self, esDerecha):
+            for nave in partidaActual.listaNaves[0 if (ventanaBatalla.numJugador+1) != 1 else 1]:
+                for i in range(nave.tipoNave):
+                    direccionesPosibles = [[0, 1],[-1, 0],[0,-1],[1, 0]] #Izquierda
+                    factorDirX, factorDirY = direccionesPosibles[nave.dirNave - 1] 
+                    y, x = nave.yPosInicial, nave.xPosInicial
+                    self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(text="") # Configura el botón para que sea solo texto
+                    self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(image=CTk.CTkImage(Image.open(naveImágenes[-1]))) # Se coloca la imagen vacía en el botón
+                    self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(True, width=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
+                    self.matrizDesplegada[y+(i*factorDirY)][x+(i*factorDirX)-esDerecha].configure(True, height=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
 
 
 class batallaApp(CTk.CTk):
@@ -539,30 +551,41 @@ class batallaApp(CTk.CTk):
                                          height=90,
                                          font=self.fuenteTexto,
                                          corner_radius=50,
-                                         command=self.manejarAcción)
+                                         command=self.manejarTipoTurno)
         self.btnCubierta.grid(column=1, row=2, padx=0, pady=0, columnspan=3)
         self.frameCubierta.tkraise()
         self.labelAdvertencia.tkraise()
         self.btnCubierta.tkraise()
     
-    def manejarAcción(self):
+    #####################################################################################
+    # Las matrices están cubiertas para evitar trampa! 
+    # manejarTipoTurno(self) controla el flujo entre los tipos de turnos que pueden haber
+    # Se controla entre colocar, direccionar y atacar.
+    # trabaja en conjunto con la función presionarBotón de las matrices
+    #####################################################################################
+
+    def manejarTipoTurno(self):
         if self.modoMatriz == "colocar":
-            if self.numJugador == 0:
+            # Colocación del primer jugador
+            if self.numJugador == 0: 
                 self.labelAdvertencia.destroy()
-                self.cargarMatriz()
+                self.cargarMatriz() # Se cargan ambas matrices solamente una vez.
                 self.btnCubierta.destroy()
                 self.frameCubierta.destroy()
                 self.colocaciónJugador()
                 self.cambioTurno()
                 self.modoMatriz = "colocar"
-                ventanaBatalla.labelMensaje.configure(text="Coloque la cabeza de la nave")
-            else:
+                self.labelMensaje.configure(text="Coloque la cabeza de la nave")
+            # Colocación del segundo jugador
+            else: 
                 self.btnCubierta.destroy()
                 self.frameCubierta.destroy()
                 self.colocaciónJugador()
                 self.modoMatriz = "atacar"
-                ventanaBatalla.labelMensaje.configure(text="Seleccione su Ataque!")
+                self.labelMensaje.configure(text="Seleccione su Ataque!")
+                self.labelNavesPorColocar.destroy()
                 self.cambioTurno()
+        # Ataque de ambos jugadores está manejado en este else if
         elif self.modoMatriz == "atacar":
             self.turnoJugador()
             self.cambioTurno()
@@ -626,8 +649,8 @@ class batallaApp(CTk.CTk):
             # La siguiente condicional utiliza una función que revisa si es válido el posicionamiento de la nave.
             # En caso de serlo la misma función coloca la nave en la matriz y retorna un valor booleano.
             if self.colocarNave(): # Retorna verdadero en caso de colocar con éxito al jugador.
-                if self.numJugador == 0: self.matrizIzquierda.totalActualizarMatriz(0)
-                else: self.matrizDerecha.totalActualizarMatriz(self.matrizIzquierda.numColumnas)
+                if self.numJugador == 0: self.matrizIzquierda.actualizarMatrizParaJugadorActual(0)
+                else: self.matrizDerecha.actualizarMatrizParaJugadorActual(self.matrizIzquierda.numColumnas)
                 break # En caso de ser válida se rompe el ciclo para volver a colocaciónJugador()
             else:
                 del partidaActual.listaNaves[self.numJugador][-1] # Borra la nave más reciente en caso de que la revisión sea inválida (retornado falso)
@@ -642,7 +665,7 @@ class batallaApp(CTk.CTk):
         naveActual = partidaActual.listaNaves[self.numJugador][-1] # Se obtiene la nave más reciente del jugador actual
         #Se revisa si el jugador aún puede colocar este tipo de nave:
         if partidaActual.listaJugadores[self.numJugador].navesPorColocar[naveActual.tipoNave - 1] <= 0:
-            print("Error: Ha llegado a la máxima cantidad de naves de este tipo.")
+            self.labelMensaje.configure(text="Ya no le quedan naves de este tipo...")
             return False
         # Se utilizan índices en una lista temporal para obtener factores de dirección que definirán hacia a dónde debe simularse la posición de la nave en el tablero
         direccionesPosibles = [[0, 1],[-1, 0],[0,-1],[1, 0]] #Izquierda
@@ -654,16 +677,16 @@ class batallaApp(CTk.CTk):
             # La posición yPosInicial va primero porque se define según la fila de la matriz (primer índice)
             try:
                 if not 0 <= naveActual.yPosInicial+(i*factorDirY): 
-                    print("Error: La nave no cabe en el tablero, inténtelo nuevamente.")
+                    self.labelMensaje.configure(text="La nave no cabe en el tablero...")
                     return False  
                 if not 0 <= naveActual.xPosInicial+(i*factorDirX):
-                    print("Error: La nave no cabe en el tablero, inténtelo nuevamente.")
+                    self.labelMensaje.configure(text="La nave no cabe en el tablero...")
                     return False  
                 if partidaActual.matrizJuego[naveActual.yPosInicial+(i*factorDirY)][naveActual.xPosInicial+(i*factorDirX)] != 0:
-                    print("Error: El espacio está obstruido por otra nave, inténtelo de nuevo")
+                    self.labelMensaje.configure(text="Su nave choca con otra nave... ")
                     return False
             except IndexError:
-                print("Error: La nave no cabe en el tablero, inténtelo nuevamente.")
+                self.labelMensaje.configure(text="La nave no cabe en el tablero...")
                 return False
         # Este código coloca la nave en la matriz, si nunca chocó contra nada.
         for i in range(naveActual.tamañoNave):
@@ -676,18 +699,13 @@ class batallaApp(CTk.CTk):
         print(naveActual.listaPosTotal)
         return True
 
-    def getTipoNave(self):
-        pass
-
     #-------------------------------------------------------------------------------------------------------------------------------------#
 
                       #   ----------------------------------  Realizar 1 Turno de Ataque  -------------------------------------------#
 
     def turnoJugador(self):
-        #1. ocultar matrices detrás de un frame
-        #2. re-acomodar barcos
-        #3. esperar input
-        #4. aceptar ataque
+        #esperar input
+        self.wait_variable(self.varBarcoColocado)
         #5. revisar ataque
         #6. verificar fin partida
         #7. cambiar jugador
@@ -699,6 +717,10 @@ class batallaApp(CTk.CTk):
 
     def cambioTurno(self):
         self.numJugador = 0 if (self.numJugador+1) != 1 else 1
+        if self.numJugador == 0: self.matrizIzquierda.actualizarMatrizParaJugadorActual(0)
+        else: self.matrizDerecha.actualizarMatrizParaJugadorActual(self.matrizIzquierda.numColumnas)
+        if self.numJugador == 1: self.matrizIzquierda.ocultarMatrizOponente(0)
+        else: self.matrizDerecha.ocultarMatrizOponente(self.matrizIzquierda.numColumnas)
         self.estadoMensaje = f"Turno de '{partidaActual.listaJugadores[self.numJugador].nickName}'"
         self.frameCubierta = CTk.CTkFrame(self,width=200,height=200,corner_radius=0,fg_color=self.colorCubierta[0 if (self.numJugador+1) != 1 else 1])
         self.frameCubierta.grid(column=0, row=0, padx=0, pady=0, sticky="nsew", columnspan=5, rowspan=5)
@@ -711,7 +733,7 @@ class batallaApp(CTk.CTk):
                                          height=90,
                                          font=self.fuenteTexto,
                                          corner_radius=50,
-                                         command=self.manejarAcción)
+                                         command=self.manejarTipoTurno)
         self.btnCubierta.grid(column=1, row=2, padx=0, pady=0, columnspan=3)
         self.frameCubierta.tkraise()
         self.btnCubierta.tkraise()
