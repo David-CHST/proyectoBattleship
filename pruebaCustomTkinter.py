@@ -434,6 +434,7 @@ class interfazMatriz(CTk.CTkFrame):
             if ventanaBatalla.frameSelecciónNave.getTipoNave() != False:
                 if self.modoMatriz == "colocar":
                     self.modoMatriz = "direccionar"
+                    self.labelMensaje.configure(text="Indique el sentido de la cola de la nave.")
                     self.celdaReciente = [i,j]
                     self.celdaActual = [i,j]
                     self.colorReciente = "#77A6BB"
@@ -554,11 +555,13 @@ class batallaApp(CTk.CTk):
                 self.colocaciónJugador()
                 self.cambioTurno()
                 self.modoMatriz = "colocar"
+                ventanaBatalla.labelMensaje.configure(text="Coloque la cabeza de la nave")
             else:
                 self.btnCubierta.destroy()
                 self.frameCubierta.destroy()
                 self.colocaciónJugador()
                 self.modoMatriz = "atacar"
+                ventanaBatalla.labelMensaje.configure(text="Seleccione su Ataque!")
                 self.cambioTurno()
         elif self.modoMatriz == "atacar":
             self.turnoJugador()
@@ -572,6 +575,10 @@ class batallaApp(CTk.CTk):
         self.matrizDerecha.grid(column=3, row=1, rowspan=3)
         self.frameSelecciónNave = interfazTipoNave(self)
         self.frameSelecciónNave.grid(column=2,row=1,rowspan=3,sticky="ew")
+        self.labelMensaje = CTk.CTkLabel(self, width=450, height=200, font=self.fuenteTexto, text="Coloque la cabeza de la nave")
+        self.labelMensaje.grid(column=1, row=0, columnspan=3, pady=20, sticky="ew")
+        self.labelNavesPorColocar = CTk.CTkLabel(self, width=450, height=200, font=self.fuenteTexto, text=f"Destructores ({6}) Cruceros ({4}) Acorazados ({2})")
+        self.labelNavesPorColocar.grid(column=1, row=4, columnspan=3, pady=20, sticky="ew")
         
 
     #-------------------------------------------------------------------------------------------------------------------------------------#
@@ -581,8 +588,9 @@ class batallaApp(CTk.CTk):
     def colocaciónJugador(self):
         # En caso de que la suma de los barcos faltantes del jugador sea 0, el ciclo termina
         while True:
+            self.labelMensaje.configure(text="Coloque la cabeza de la nave")
             navesPorColocar = partidaActual.listaJugadores[self.numJugador].navesPorColocar
-            print(navesPorColocar)
+            self.labelNavesPorColocar.configure(text=f"Destructores ({navesPorColocar[0]}) Cruceros ({navesPorColocar[1]}) Acorazados ({navesPorColocar[2]})")
             if navesPorColocar[0] + navesPorColocar[1] + navesPorColocar[2] == 0:
                 return
             else:
