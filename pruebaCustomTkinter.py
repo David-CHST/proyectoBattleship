@@ -44,13 +44,15 @@ class Nave:
         for parOrdenado in self.listaPosTotal:
             for distanciaMax in range(self.movimientoMax):
                 if not parOrdenado[0]-(distanciaMax) in range(len(partidaActual.matrizJuego)): #0=y 1=x 
-                    print("Error: La nave no puede moverse más hacia arriba.")
-                    if not self.puedeMoverMínimo:
-                        self.dirNave = 1
-                        self.yPosInicial -= self.tipoNave-1
-                    return
+                    if partidaActual.matrizJuego[parOrdenado[0]-(distanciaMax)][parOrdenado[1]] != 0:
+                        print("Error: La nave no puede moverse más hacia arriba.")
+                        if not self.puedeMoverMínimo:
+                            self.dirNave = 1
+                            self.yPosInicial -= self.tipoNave-1
+                        return
                 self.puedeMoverMínimo = True
-                
+        
+        # Correctamente mueve la nave si se llega hasta esta parte del código sin retornar la función
         for parOrdenado in self.listaPosTotal:
             parOrdenado[0] -= self.movimientoMax
             self.yPosInicial -= self.movimientoMax
@@ -63,11 +65,12 @@ class Nave:
         for parOrdenado in self.listaPosTotal:
             for distanciaMax in range(self.movimientoMax):
                 if not parOrdenado[0]+(distanciaMax) in range(len(partidaActual.matrizJuego)): #0=y 1=x 
-                    print("Error: La nave no puede moverse más hacia arriba.")
-                    if not self.puedeMoverMínimo:
-                        self.dirNave = 3
-                        self.yPosInicial += self.tipoNave-1
-                    return
+                    if partidaActual.matrizJuego[parOrdenado[0]+(distanciaMax)][parOrdenado[1]] != 0:
+                        print("Error: La nave no puede moverse más hacia abajo.")
+                        if not self.puedeMoverMínimo:
+                            self.dirNave = 3
+                            self.yPosInicial += self.tipoNave-1
+                        return
                 self.puedeMoverMínimo = True
                 
         for parOrdenado in self.listaPosTotal:
@@ -82,11 +85,12 @@ class Nave:
         for parOrdenado in self.listaPosTotal:
             for distanciaMax in range(self.movimientoMax):
                 if not parOrdenado[1]-(distanciaMax) in range(len(partidaActual.matrizJuego[0])):
-                    print("Error: La nave no puede moverse más hacia arriba.")
-                    if not self.puedeMoverMínimo:
-                        self.dirNave = 4
-                        self.xPosInicial -= self.tipoNave-1
-                    return
+                    if partidaActual.matrizJuego[parOrdenado[0]][parOrdenado[1]-(distanciaMax)] != 0:
+                        print("Error: La nave no puede moverse más hacia la izquierda.")
+                        if not self.puedeMoverMínimo:
+                            self.dirNave = 4
+                            self.xPosInicial -= self.tipoNave-1
+                        return
                 self.puedeMoverMínimo = True
                 
         for parOrdenado in self.listaPosTotal:
@@ -99,13 +103,36 @@ class Nave:
         # Verifica si la nave puede moverse hacia arriba sin salir del borde superior del tablero
         for parOrdenado in self.listaPosTotal:
             for distanciaMax in range(self.movimientoMax):
+                # Revisa que la nave se mueva dentro de la matriz
                 if not parOrdenado[1]+(distanciaMax) in range(len(partidaActual.matrizJuego[0])):
-                    print("Error: La nave no puede moverse más hacia arriba.")
+                    print("Error: La nave no puede moverse más hacia la derecha.")
                     if not self.puedeMoverMínimo:
                         self.dirNave = 2
                         self.xPosInicial += self.tipoNave-1
                     return
-                self.puedeMoverMínimo = True
+                # Revisa que la nave no choque contra otra
+                if partidaActual.matrizJuego[parOrdenado[0]][parOrdenado[1]+(distanciaMax)] != 0:
+                    print("Error: La nave no puede moverse más hacia la derecha.")
+                    if not self.puedeMoverMínimo:
+                        self.dirNave = 2
+                        self.xPosInicial += self.tipoNave-1
+                    return
+                # Revisa que las naves no se excedan de sus campos, una nave de jugador 0 no puede cruzar al lado de jugador 1
+                if ventanaBatalla.numJugador == 0:
+                    if ventanaBatalla.matrizIzquierda.numColumnas <= partidaActual.matrizJuego[parOrdenado[0]][parOrdenado[1]+(distanciaMax)]:
+                        print("Error: La nave no puede moverse más hacia la derecha.")
+                        if not self.puedeMoverMínimo:
+                            self.dirNave = 2
+                            self.xPosInicial += self.tipoNave-1
+                        return
+                # Lo anterior, pero para el jugador 2
+                elif ventanaBatalla.matrizIzquierda.numColumnas > partidaActual.matrizJuego[parOrdenado[0]][parOrdenado[1]+(distanciaMax)]:
+                    print("Error: La nave no puede moverse más hacia la derecha.")
+                    if not self.puedeMoverMínimo:
+                        self.dirNave = 2
+                        self.xPosInicial += self.tipoNave-1
+                    return
+                self.puedeMoverMínimo = True # En caso de que se haya podido mover aunque sea 1 cuadro, se guarda esto en la clase
                 
         for parOrdenado in self.listaPosTotal:
             parOrdenado[1] += self.movimientoMax
@@ -414,9 +441,6 @@ class interfazMatriz(CTk.CTkFrame):
         self.matrizDesplegada[self.numFilas-1][0].grid(row=self.numFilas-1,column=0,padx=(20,self.espacioCuadros),pady=(self.espacioCuadros,20), sticky="nsew")
         # Y listo, cuando se vaya a crear la clase con "interfazMatriz(argumentosAquí)" todo este código corre para que exista una nueva cuadrícula de botones
 
-    # Al presionar el botón se ejecuta esto
-    # Esta función es un despelote de prueba que lo que hace es quitar el texto y colocar imágenes
-
     def resaltarDireccionarToggle(self):
         self.colorReciente = "#77A6BB" if self.colorReciente != "#77A6BB" else "#67AE5B"
         print("color",self.colorReciente)
@@ -431,12 +455,20 @@ class interfazMatriz(CTk.CTkFrame):
             self.matrizDesplegada[self.celdaActual[0]][self.celdaActual[1]-1].configure(fg_color=self.colorReciente)
         
     def resaltarImpactos(self, esDerecha):
-        for nave in partidaActual.listaNaves[[0 if (ventanaBatalla.numJugador+1) != 1 else 1]]:
+        for nave in partidaActual.listaNaves[0 if (ventanaBatalla.numJugador+1) != 1 else 1]:
             for parOrdenado in nave.listaPosImpacto:
                 y, x = parOrdenado[:]
                 self.matrizDesplegada[y][x].configure(fg_color="#FA4F00") # Configura el botón para que sea solo texto
                 self.matrizDesplegada[y][x].configure(True, width=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
                 self.matrizDesplegada[y][x].configure(True, height=self.tamañoBotones) # Se actualiza el tamaño del botón, colocando true para que se refresque y aparezca la imagen.
+
+    ###################################################################################
+    # presionarBotón(self,i,j) ejecuta las acciones adecuadas para cada tipo de botón #
+    # se encarga de que funcione para colocar, direccionar y atacar                   #
+    ###################################################################################
+
+
+
 
     def presionarBotón(self,i,j):
         if ventanaBatalla.numJugador == self.numJugador:
@@ -481,7 +513,13 @@ class interfazMatriz(CTk.CTkFrame):
                         ventanaBatalla.labelMensaje.configure(text="Posicionamiento Cancelado!")
                         return self.varDirElegida.set("0")
                 elif self.modoMatriz == "atacar":
-                    pass
+                    variableTransmitida = ""
+                    variableTransmitida += str(i)
+                    variableTransmitida += ","+str(j)
+                    self.varDirElegida.set(variableTransmitida)
+                    self.modoMatriz == "NINGUNA"
+                else:
+                    print("Su turno ya pasó!")
             else:
                 ventanaBatalla.labelMensaje.configure(text="Seleccione un tipo de Nave!")
         else:
@@ -598,13 +636,19 @@ class batallaApp(CTk.CTk):
                 self.cambioTurno()
         # Ataque de ambos jugadores está manejado en este else if
         elif self.modoMatriz == "atacar":
-            if self.numJugador == 0: 
+            if self.numJugador == 0:
+                self.btnCubierta.destroy()
+                self.frameCubierta.destroy()
                 self.turnoJugador()
+                self.modoMatriz = "atacar"
                 self.cambioTurno()
             else:
+                self.btnCubierta.destroy()
+                self.frameCubierta.destroy()
                 self.turnoJugador()
-                self.cambioTurno()
                 self.moverNaves()
+                self.modoMatriz = "atacar"
+                self.cambioTurno()
 
 
     def cargarMatriz(self):
@@ -643,7 +687,7 @@ class batallaApp(CTk.CTk):
     def nuevoBarco(self): 
         # Espera a recibir todas las naves del jugador
         while True:
-            #temp
+            #temp para visualizar la matriz
             for i in partidaActual.matrizJuego:
                 print(i)
             self.wait_variable(self.varBarcoColocado)
@@ -653,6 +697,7 @@ class batallaApp(CTk.CTk):
                 datosNave[num] = int(datosNave[num])
 
             # Para el jugador 2 se debe considerar la segunda mitad de la matriz
+            # Se le suman columnas según el tamaño de la matriz izquierda dado que son gemelas las matrices
             if self.numJugador == 1:
                 datosNave[3] += self.matrizIzquierda.numColumnas
 
@@ -675,7 +720,7 @@ class batallaApp(CTk.CTk):
     
     #-------------------------------------------------------------------------------------------------------------------------------------#
 
-                      #   ----------------------------------  Verificar Barco  -------------------------------------------#
+                      #   ----------------------------------  Verificar Colocado  -------------------------------------------#
 
     def colocarNave(self):
         naveActual = partidaActual.listaNaves[self.numJugador][-1] # Se obtiene la nave más reciente del jugador actual
@@ -723,7 +768,7 @@ class batallaApp(CTk.CTk):
         print(naveActual.listaPosTotal)
         return True
 
-    def actualizarMatrizJuego():
+    def actualizarMatrizJuego(self):
         # Iterar sobre todas las filas de la matriz del juego
         for fila in range(len(partidaActual.matrizJuego)):
             # Iterar sobre todas las columnas de la matriz del juego
@@ -747,11 +792,10 @@ class batallaApp(CTk.CTk):
 
                       #   ---------------------------------- Ciclar Movimiento de las Naves -------------------------------#
 
-
-
     def moverNaves(self):
-        self.actualizarMatrizJuego()
         for naveAMover in partidaActual.listaNaves[0]: #Itera sobre cada nave en la lista de naves del jugador 1.
+            self.numJugador = 0
+            self.actualizarMatrizJuego()
             direccion = naveAMover.dirNave  # Utilizar la dirección de la nave
             if direccion in [1, 2, 3, 4] and naveAMover.impactos == 0:  # Comprobar si la dirección es válida y si la nave puede moverse      
                 naveMoved = False # Se asigna la variable un valor booleano con el fin de que cuando este cambie de estado el bucle finalice
@@ -813,9 +857,11 @@ class batallaApp(CTk.CTk):
                 print("Dirección de movimiento inválida para la nave. Moviendo a la siguiente nave.")
             naveAMover.seMueveEsteTurno == True
         # Lo mismo para el jugador 2
-        for naveAMover in partidaActual.listaNaves[1]: #Itera sobre cada nave en la lista de naves del jugador actual.
+        for naveAMover in partidaActual.listaNaves[1]: #Itera sobre cada nave en la lista de naves del jugador 1.
+            self.numJugador = 1
+            self.actualizarMatrizJuego()
             direccion = naveAMover.dirNave  # Utilizar la dirección de la nave
-            if direccion in [1, 2, 3, 4] and naveAMover.seMueveEsteTurno == True and naveAMover.impactos == 0:  # Comprobar si la dirección es válida        
+            if direccion in [1, 2, 3, 4] and naveAMover.impactos == 0:  # Comprobar si la dirección es válida y si la nave puede moverse      
                 naveMoved = False # Se asigna la variable un valor booleano con el fin de que cuando este cambie de estado el bucle finalice
                 while not naveMoved: #El bucle continuará ejecutandose siempre que "naveMoved" sea falsa               
                     if direccion == 3:  # Arriba #Se compara la dirección con la selección de dirNave               
@@ -823,34 +869,98 @@ class batallaApp(CTk.CTk):
                             print("Nave movida arriba.")#se imprime un mensaje indicando la dirección en la que se movió la nave                            
                             naveMoved = True #Si el movimiento es exitoso, lo iguala a True para no inicializar con las otras comparaciones y finalizar el ciclo 
                         else:
-                            naveMoved = True
-                #----------------------- La logica se repite con la abarcar los posibles casos   --------------------------#
-                    elif direccion == 1:  # Abajo           
+                            if naveAMover.puedeMoverMínimo: # El destructor puede tal vez moverse 1 espacio, pero no 2. Esto se encarga de ese caso
+                                naveAMover.movimientoMax = 1
+                                if naveAMover.moverArriba():
+                                    print("Nave movida arriba.")#se imprime un mensaje indicando la dirección en la que se movió la nave                            
+                                    naveMoved = True
+                                naveAMover.movimientoMax = 2 # Se re-establece el movimiento máximo del destructor
+                            else:
+                                naveMoved = True
+                    ## La logica se repite para abarcar los posibles casos ##    
+                    elif direccion == 1:  # Abajo         
                         if naveAMover.moverAbajo():                    
                             print("Nave movida abajo.")                                  
                             naveMoved = True      
                         else:
-                            naveMoved = True      
+                            if naveAMover.puedeMoverMínimo: # El destructor puede tal vez moverse 1 espacio, pero no 2. Esto se encarga de ese caso
+                                naveAMover.movimientoMax = 1
+                                if naveAMover.moverAbajo():
+                                    print("Nave movida abajo.")#se imprime un mensaje indicando la dirección en la que se movió la nave                            
+                                    naveMoved = True
+                                naveAMover.movimientoMax = 2
+                            else:
+                                naveMoved = True   
                     elif direccion == 2:  # Izquierda
                         if naveAMover.moverIzquierda():
                             print("Nave movida izquierda.")
                             naveMoved = True
                         else:
-                            naveMoved = True
+                            if naveAMover.puedeMoverMínimo: # El destructor puede tal vez moverse 1 espacio, pero no 2. Esto se encarga de ese caso
+                                naveAMover.movimientoMax = 1
+                                if naveAMover.moverIzquierda():
+                                    print("Nave movida izquierda.")#se imprime un mensaje indicando la dirección en la que se movió la nave                            
+                                    naveMoved = True
+                                naveAMover.movimientoMax = 2
+                            else:
+                                naveMoved = True
                     elif direccion == 4:  # Derecha
                         if naveAMover.moverDerecha():
                             print("Nave movida derecha.")
                             naveMoved = True
                         else:
-                            naveMoved = True
+                            if naveAMover.puedeMoverMínimo: # El destructor puede tal vez moverse 1 espacio, pero no 2. Esto se encarga de ese caso
+                                naveAMover.movimientoMax = 1
+                                if naveAMover.moverDerecha():
+                                    print("Nave movida derecha.")#se imprime un mensaje indicando la dirección en la que se movió la nave                            
+                                    naveMoved = True
+                                naveAMover.movimientoMax = 2
+                            else:
+                                naveMoved = True
             else:
                 print("Dirección de movimiento inválida para la nave. Moviendo a la siguiente nave.")
             naveAMover.seMueveEsteTurno == True
         
-        print("Se han movido todas las naves del jugador.")
-
-    
     #-------------------------------------------------------------------------------------------------------------------------------------#
+
+
+                      #   ----------------------------------  Revisar Ataque Realizado  -------------------------------------------#
+    
+    def AtaqueFlota(self):
+        # Obtener la lista de naves del jugador actual
+        numOponente = 0 if (self.numJugador+1) == 2 else 1 #Hacer chequeo para ver si las naven se calleron
+        listaNavesOponente = partidaActual.listaNaves[numOponente] #Obtiene la lista de naves del oponente, haciendo que el indice cambie del jugador opuesto 
+        
+        # Obtener coordenadas del jugador
+        fila = int(input("Digite la fila de la coordenada en la que desea iterar: "))  # Solicita al jugador la fila
+        columna = int(input("Digite la columna de la coordenada sobre la que desea iterar: "))  # Solicita al jugador la columna
+        coordenada = [fila - 1, columna - 1]  # Se resta 1 para ajustar a la indexación de Python (empezando desde 0)
+
+        # Iterar sobre las naves del jugador
+        for nave in listaNavesOponente:
+            print("prueba",nave.listaPosTotal)
+            print("Coordenada",coordenada)
+            if coordenada in nave.listaPosTotal:  # Comprobar si las coordenadas están en las posiciones de la nave
+                nave.listaPosImpacto.append([fila -1, columna -1]) #Agrega las casillas impactadas a la nave impactada y posteriormente detectan los hundimientos
+                nave.impactos += 1 #Si no lo ha sido, cambia el valor a true
+                partidaActual.listaJugadores[self.numJugador].tirosAcertados += 1 # Incrementar el contador de tiros acertados del jugador
+                print("¡Acertaste un disparo! La nave ha sido impactada.")
+                #-----------------------------------------------------------------#
+                #como le digo a bro que si el numero de impactos es igual al numero de casillas de la nave
+                if nave.impactos == (nave.tipoNave):  # Si la nave ha sido impactada, detectan los hundimientos
+                    nave.hundida = True
+                    partidaActual.listaJugadores[self.numJugador].numHundimientos[nave.tipoNave-1] += 1 
+            else:
+                print("Tiro fallido, no impactaste en ninguna nave.")
+                partidaActual.listaJugadores[self.numJugador].tirosFallidos += 1
+            return
+        
+
+        if self.numJugador.numHundimientos[0] + self.numJugador.numHundimientos[1] + self.numJugador.numHundimientos[2] == len(listaNavesOponente):
+            print("¡Todas las naves del oponente han sido hundidas!")
+
+    #-------------------------------------------------------------------------------------------------------------------------------------#
+
 
                       #   ----------------------------------  Realizar 1 Turno de Ataque  -------------------------------------------#
 
@@ -858,8 +968,9 @@ class batallaApp(CTk.CTk):
         while True:    
             #esperar input
             self.wait_variable(self.varBarcoColocado)
-            #5. revisar ataque
-        #6. verificar fin partida
+            celdaAtacada = self.varBarcoColocado.get()
+            celdaAtacada = celdaAtacada.split(",")
+
             pass
     
     #-------------------------------------------------------------------------------------------------------------------------------------#
@@ -891,7 +1002,20 @@ class batallaApp(CTk.CTk):
         if self.modoMatriz == "atacar":
             self.actualizarMatrizJuego()
             hundidosJugador = partidaActual.listaJugadores[self.numJugador].numHundimientos
+            self.labelMensaje.configure(text="Seleccione su Ataque!")
             self.labelNavesPendientes.configure(text=f"Destructores ({6-hundidosJugador[0]}) Cruceros ({4-hundidosJugador[1]}) Acorazados ({2-hundidosJugador[2]})")
+
+    def revisarVictoria(self, forzarTerminar):
+        if  partidaActual.listaJugadores[1].numHundimientos == 12 and partidaActual.listaJugadores[0].numHundimientos == 12:
+            print("Buenas noticias! La partida es un empate")
+        elif partidaActual.listaJugadores[1].numHundimientos == 12:
+            print("¡Felicidades jugador",0,",has ganado la partida!")
+        elif partidaActual.listaJugadores[0].numHundimientos == 12:
+            print("¡Felicidades jugador",1,",has ganado la partida!")
+        elif forzarTerminar:
+            pass
+            # aquí tiene que ir el código encargado de contar puntajes y determinar un ganador
+
 
 
 ################################################  Comienzo del código que ejecuta todas las funciones y clases anteriores #################################################################
