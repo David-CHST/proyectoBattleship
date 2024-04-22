@@ -637,7 +637,7 @@ class batallaApp(CTk.CTk):
             print("Error: Ha llegado a la máxima cantidad de naves de este tipo.")
             return False
         # Se utilizan índices en una lista temporal para obtener factores de dirección que definirán hacia a dónde debe simularse la posición de la nave en el tablero
-        direccionesPosibles = [[0,-1],[1, 0],[0, 1],[-1, 0]] #Izquierda
+        direccionesPosibles = [[0, 1],[-1, 0],[0,-1],[1, 0]] #Izquierda
         print("dirNave",naveActual.dirNave)
         factorDirX, factorDirY = direccionesPosibles[naveActual.dirNave - 1]
         for i in range(naveActual.tamañoNave):  # Se revisa según el tamaño de la nave, todas las casillas que va a ocupar en el juego
