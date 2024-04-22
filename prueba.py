@@ -36,11 +36,11 @@ class Jugador:
     def __init__(self, realName, nickName):
         self.realName = realName
         self.nickName = nickName
-        self.tirosAcertados = 0
-        self.tirosFallidos = 0
-        self.tamañoFlota = 0
-        self.numHundimientos = 0
-        self.navesPorColocar = [6,4,2]
+        self.tirosAcertados = 0 
+        self.tirosFallidos = 0 
+        self.tamañoFlota = 0 
+        self.numHundimientos = 0 
+        self.navesPorColocar = [6,4,2] 
 
 class Nave:
     def __init__(self, tipoNave, dirNave, posNave):
